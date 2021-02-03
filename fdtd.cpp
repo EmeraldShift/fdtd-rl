@@ -6,7 +6,7 @@
 
 #include <raft>
 
-int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, int t)
+int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, unsigned long t)
 {
 	ZeroGridGenerator zgg(dimX, dimY, dimZ, t);
 	GridPrinter p;

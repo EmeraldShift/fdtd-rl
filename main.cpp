@@ -1,9 +1,8 @@
-#include "fdtd.hpp"
 #include "grid.hpp"
+#include "fdtd.hpp"
 
 #include <iostream>
 #include <cstdlib>
-#include <cstring>
 
 [[noreturn]]
 static void usage(const char *progname)
@@ -18,16 +17,16 @@ static void usage(const char *progname)
 
 int main(int argc, char **argv)
 {
-	int dimX, dimY, dimZ;
-	int t;
+	dim_t dimX, dimY, dimZ;
+	unsigned long t;
 
 	if (argc < 5)
 		usage(argv[0]);
-	dimX = std::atoi(argv[1]);
-	dimY = std::atoi(argv[2]);
-	dimZ = std::atoi(argv[3]);
-	t    = std::atoi(argv[4]);
-	if (dimX <= 0 || dimY <= 0 || dimZ <= 0 || t < 0)
+	dimX = std::strtoul(argv[1], nullptr, 0);
+	dimY = std::strtoul(argv[2], nullptr, 0);
+	dimZ = std::strtoul(argv[3], nullptr, 0);
+	t    = std::strtoul(argv[4], nullptr, 0);
+	if (dimX == 0 || dimY == 0 || dimZ == 0)
 		usage(argv[0]);
 
 	return fdtd(dimX, dimY, dimZ, t);

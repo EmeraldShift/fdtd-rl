@@ -5,7 +5,7 @@
 #include <iostream>
 #include <sstream>
 
-ZeroGridGenerator::ZeroGridGenerator(dim_t x, dim_t y, dim_t z, int n) : x(x), y(y), z(z), n(n)
+ZeroGridGenerator::ZeroGridGenerator(dim_t x, dim_t y, dim_t z, unsigned long n) : x(x), y(y), z(z), n(n)
 {
 	output.addPort<Grid>("output");
 }
