@@ -22,7 +22,7 @@ public:
 	Grid() : Grid(0, 0, 0) {}
 
 	Grid(dim_t dimX, dim_t dimY, dim_t dimZ) : dimX(dimX), dimY(dimY), dimZ(dimZ),
-	        mstride(dimX * dimY), grid(new elem_t[dimX * dimY * dimZ]()) {
+			mstride(dimX * dimY), grid(new elem_t[dimX * dimY * dimZ]()) {
 	}
 
 	Grid(const Grid &o) = default;
