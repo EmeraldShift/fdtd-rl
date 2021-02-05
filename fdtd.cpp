@@ -6,7 +6,7 @@
 
 #include <cstdlib>
 
-int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, unsigned long t)
+int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, unsigned long t, unsigned long flags)
 {
 	// Simulation parameters
 	phys::params params(dimX, dimY, dimZ);
@@ -56,7 +56,31 @@ int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, unsigned long t)
 	m += ey["Final"] >> pey;
 	m += ez["Final"] >> pez;
 
-	m.exe<partition_dummy, simple_schedule, stdalloc, no_parallel>();
+#ifdef VL
+	if (flags & FLAG_VTL) {
+#ifdef QT
+		if (flags & FLAG_QTH)
+			m.exe<partition_dummy, pool_schedule, vlalloc, no_parallel>();
+		else
+#endif // QT
+			m.exe<partition_dummy, simple_schedule, vlalloc, no_parallel>();
+	} else
+#endif // VL
+	if (flags & FLAG_DYN) {
+#ifdef QT
+		if (flags & FLAG_QTH)
+			m.exe<partition_dummy, pool_schedule, dynalloc, no_parallel>();
+		else
+#endif // QT
+		m.exe<partition_dummy, simple_schedule, dynalloc, no_parallel>();
+	} else {
+#ifdef QT
+		if (flags & FLAG_QTH)
+			m.exe<partition_dummy, pool_schedule, stdalloc, no_parallel>();
+		else
+#endif // QT
+		m.exe<partition_dummy, simple_schedule, stdalloc, no_parallel>();
+	}
 
 	return EXIT_SUCCESS;
 }

@@ -2,4 +2,8 @@
 
 #include "grid.hpp"
 
-int fdtd(dim_t, dim_t, dim_t, unsigned long);
+constexpr unsigned long FLAG_QTH = 1;
+constexpr unsigned long FLAG_DYN = 2;
+constexpr unsigned long FLAG_VTL = 4;
+
+int fdtd(dim_t, dim_t, dim_t, unsigned long, unsigned long);
