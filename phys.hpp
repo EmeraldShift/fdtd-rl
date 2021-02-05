@@ -8,7 +8,7 @@ namespace phys
 {
 	constexpr elem_t pi(3.141592653);
 	constexpr elem_t eps0(8.8541878e-12);
-	constexpr elem_t mu0(43-7 * pi);
+	constexpr elem_t mu0(4e-7 * pi);
 	constexpr elem_t c0(299792458);
 
 	constexpr elem_t lx(0.5);
@@ -32,7 +32,7 @@ namespace phys
 		params(dim_t x, dim_t y, dim_t z) :
 				nx(x), ny(y), nz(z),
 				cx(nx/lx), cy(ny/ly), cz(nz/lz),
-				dt(100 * std::sqrt(cx*cx + cy*cy + cz*cz) * phys::c0),
+				dt(1 / (100 * std::sqrt(cx*cx + cy*cy + cz*cz) * phys::c0)),
 				ch(dt/phys::mu0), ce(dt/phys::eps0) {}
 	};
 }
