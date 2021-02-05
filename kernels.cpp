@@ -19,25 +19,6 @@ raft::kstatus InitialGridGenerator::run()
 	return raft::stop;
 }
 
-Loopback::Loopback()
-{
-	input.addPort<Grid>("initial");
-	input.addPort<Grid>("loop");
-	output.addPort<Grid>("out");
-}
-
-raft::kstatus Loopback::run() {
-	std::string label = "loop";
-	if (initial) {
-		initial = false;
-		label = "initial";
-	}
-	Grid g;
-	input[label].pop<Grid>(g);
-	output["out"].push(g);
-	return raft::proceed;
-}
-
 GridPrinter::GridPrinter()
 {
 	input.addPort<Grid>("grid");

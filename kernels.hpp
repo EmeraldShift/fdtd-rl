@@ -5,7 +5,7 @@
 
 #include <raft>
 
-// Generate zero-filled Grids with a given dimension (x, y, z).
+// Generate randomly-filled Grids with a given dimension (x, y, z).
 class InitialGridGenerator : public raft::kernel {
 	dim_t x, y, z;
 	unsigned int ports;
@@ -14,15 +14,6 @@ public:
 	CLONE();
 	InitialGridGenerator(dim_t x, dim_t y, dim_t z, unsigned int ports);
 	InitialGridGenerator(const InitialGridGenerator &o) : InitialGridGenerator(o.x, o.y, o.z, o.ports) {}
-	raft::kstatus run() final;
-};
-
-// Generate zero-filled Grids with a given dimension (x, y, z).
-class Loopback : public raft::kernel {
-	bool initial = true;
-
-public:
-	Loopback();
 	raft::kstatus run() final;
 };
 
