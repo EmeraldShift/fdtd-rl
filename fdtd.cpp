@@ -56,7 +56,7 @@ int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, unsigned long t)
 	m += ey["Final"] >> pey;
 	m += ez["Final"] >> pez;
 
-	m.exe();
+	m.exe<partition_dummy, simple_schedule, stdalloc, no_parallel>();
 
 	return EXIT_SUCCESS;
 }
