@@ -3,9 +3,10 @@
 #include <cstdlib>
 #include <iostream>
 
-InitialGridGenerator::InitialGridGenerator(dim_t x, dim_t y, dim_t z) : x(x), y(y), z(z)
+InitialGridGenerator::InitialGridGenerator(dim_t x, dim_t y, dim_t z, unsigned ports) : x(x), y(y), z(z), ports(ports)
 {
-	output.addPort<Grid>("out");
+	for (unsigned i = 0; i < ports; i++)
+		output.addPort<Grid>(std::to_string(i));
 }
 
 raft::kstatus InitialGridGenerator::run()
@@ -13,8 +14,8 @@ raft::kstatus InitialGridGenerator::run()
 	Grid g(x, y, z);
 	for (dim_t i = 0; i < x * y * z; i++)
 		g[i] = drand48();
-	output["out"].push(g);
-
+	for (auto &p : output)
+		p.push(g);
 	return raft::stop;
 }
 
@@ -57,6 +58,9 @@ raft::kstatus GridPrinter::run()
 
 Hx::Hx(phys::params params, unsigned long i) : raft::kernel(), params(params), iterations(i)
 {
+	input.addPort<Grid>("init_Hx");
+	input.addPort<Grid>("init_Ey");
+	input.addPort<Grid>("init_Ez");
 	input.addPort<Grid>("Hx");
 	input.addPort<Grid>("Ey");
 	input.addPort<Grid>("Ez");
@@ -74,9 +78,16 @@ raft::kstatus Hx::run()
 	}
 
 	Grid hx, ey, ez;
-	input["Hx"].pop(hx);
-	input["Ey"].pop(ey);
-	input["Ez"].pop(ez);
+	if (initial) {
+		initial = false;
+		input["init_Hx"].pop(hx);
+		input["init_Ey"].pop(ey);
+		input["init_Ez"].pop(ez);
+	} else {
+		input["Hx"].pop(hx);
+		input["Ey"].pop(ey);
+		input["Ez"].pop(ez);
+	}
 
 	for (dim_t x = 0; x < params.nx-1; x++) {
 		for (dim_t y = 0; y < params.ny-1; y++) {
@@ -96,6 +107,9 @@ raft::kstatus Hx::run()
 
 Hy::Hy(phys::params params, unsigned long i) : params(params), iterations(i)
 {
+	input.addPort<Grid>("init_Hy");
+	input.addPort<Grid>("init_Ez");
+	input.addPort<Grid>("init_Ex");
 	input.addPort<Grid>("Hy");
 	input.addPort<Grid>("Ez");
 	input.addPort<Grid>("Ex");
@@ -113,9 +127,16 @@ raft::kstatus Hy::run()
 	}
 
 	Grid hy, ez, ex;
-	input["Hy"].pop(hy);
-	input["Ez"].pop(ez);
-	input["Ex"].pop(ex);
+	if (initial) {
+		initial = false;
+		input["init_Hy"].pop(hy);
+		input["init_Ez"].pop(ez);
+		input["init_Ex"].pop(ex);
+	} else {
+		input["Hy"].pop(hy);
+		input["Ez"].pop(ez);
+		input["Ex"].pop(ex);
+	}
 
 	for (dim_t x = 0; x < params.nx-1; x++) {
 		for (dim_t y = 0; y < params.ny-1; y++) {
@@ -135,6 +156,9 @@ raft::kstatus Hy::run()
 
 Hz::Hz(phys::params params, unsigned long i) : params(params), iterations(i)
 {
+	input.addPort<Grid>("init_Hz");
+	input.addPort<Grid>("init_Ex");
+	input.addPort<Grid>("init_Ey");
 	input.addPort<Grid>("Hz");
 	input.addPort<Grid>("Ex");
 	input.addPort<Grid>("Ey");
@@ -152,9 +176,16 @@ raft::kstatus Hz::run()
 	}
 
 	Grid hz, ex, ey;
-	input["Hz"].pop(hz);
-	input["Ex"].pop(ex);
-	input["Ey"].pop(ey);
+	if (initial) {
+		initial = false;
+		input["init_Hz"].pop(hz);
+		input["init_Ex"].pop(ex);
+		input["init_Ey"].pop(ey);
+	} else {
+		input["Hz"].pop(hz);
+		input["Ex"].pop(ex);
+		input["Ey"].pop(ey);
+	}
 
 	for (dim_t x = 0; x < params.nx-1; x++) {
 		for (dim_t y = 0; y < params.ny-1; y++) {
@@ -174,6 +205,7 @@ raft::kstatus Hz::run()
 
 Ex::Ex(phys::params params, unsigned long i) : params(params), iterations(i)
 {
+	input.addPort<Grid>("init_Ex");
 	input.addPort<Grid>("Ex");
 	input.addPort<Grid>("Hy");
 	input.addPort<Grid>("Hz");
@@ -191,7 +223,12 @@ raft::kstatus Ex::run()
 	}
 
 	Grid ex, hy, hz;
-	input["Ex"].pop(ex);
+	if (initial) {
+		initial = false;
+		input["init_Ex"].pop(ex);
+	} else {
+		input["Ex"].pop(ex);
+	}
 	input["Hy"].pop(hy);
 	input["Hz"].pop(hz);
 
@@ -213,6 +250,7 @@ raft::kstatus Ex::run()
 
 Ey::Ey(phys::params params, unsigned long i) : params(params), iterations(i)
 {
+	input.addPort<Grid>("init_Ey");
 	input.addPort<Grid>("Ey");
 	input.addPort<Grid>("Hz");
 	input.addPort<Grid>("Hx");
@@ -230,7 +268,12 @@ raft::kstatus Ey::run()
 	}
 
 	Grid ey, hz, hx;
-	input["Ey"].pop(ey);
+	if (initial) {
+		initial = false;
+		input["init_Ey"].pop(ey);
+	} else {
+		input["Ey"].pop(ey);
+	}
 	input["Hz"].pop(hz);
 	input["Hx"].pop(hx);
 
@@ -252,6 +295,7 @@ raft::kstatus Ey::run()
 
 Ez::Ez(phys::params params, unsigned long i) : params(params), iterations(i)
 {
+	input.addPort<Grid>("init_Ez");
 	input.addPort<Grid>("Ez");
 	input.addPort<Grid>("Hx");
 	input.addPort<Grid>("Hy");
@@ -269,7 +313,12 @@ raft::kstatus Ez::run()
 	}
 
 	Grid ez, hx, hy;
-	input["Ez"].pop(ez);
+	if (initial) {
+		initial = false;
+		input["init_Ez"].pop(ez);
+	} else {
+		input["Ez"].pop(ez);
+	}
 	input["Hx"].pop(hx);
 	input["Hy"].pop(hy);
 

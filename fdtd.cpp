@@ -20,53 +20,32 @@ int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, unsigned long t)
 
 	raft::map m;
 
-	InitialGridGenerator zgg(dimX, dimY, dimZ);
+	InitialGridGenerator igh(dimX, dimY, dimZ, 1);
+	InitialGridGenerator igex(dimX, dimY, dimZ, 3);
+	InitialGridGenerator igey(dimX, dimY, dimZ, 3);
+	InitialGridGenerator igez(dimX, dimY, dimZ, 3);
 
-	// Self-loopback
-	Loopback lhx, lhy, lhz, lex, ley, lez;
-	m += *(zgg.clone()) >> lhx["initial"] >> hx["Hx"]["out_Hx"] >> lhx["loop"];
-	m += *(zgg.clone()) >> lhy["initial"] >> hy["Hy"]["out_Hy"] >> lhy["loop"];
-	m += *(zgg.clone()) >> lhz["initial"] >> hz["Hz"]["out_Hz"] >> lhz["loop"];
-	m += *(zgg.clone()) >> lex["initial"] >> ex["Ex"]["out_Ex"] >> lex["loop"];
-	m += *(zgg.clone()) >> ley["initial"] >> ey["Ey"]["out_Ey"] >> ley["loop"];
-	m += *(zgg.clone()) >> lez["initial"] >> ez["Ez"]["out_Ez"] >> lez["loop"];
+	// Self-loopback & Initial Grids
+	m += *(igh.clone()) >> hx["init_Hx"]["out_Hx"] >> hx["Hx"];
+	m += *(igh.clone()) >> hy["init_Hy"]["out_Hy"] >> hy["Hy"];
+	m += *(igh.clone()) >> hz["init_Hz"]["out_Hz"] >> hz["Hz"];
+	m += igex["0"] >> ex["init_Ex"]["out_Ex"] >> ex["Ex"];
+	m += igex["1"] >> hy["init_Ex"];
+	m += igex["2"] >> hz["init_Ex"];
+	m += igey["0"] >> ey["init_Ey"]["out_Ey"] >> ey["Ey"];
+	m += igey["1"] >> hz["init_Ey"];
+	m += igey["2"] >> hx["init_Ey"];
+	m += igez["0"] >> ez["init_Ez"]["out_Ez"] >> ez["Ez"];
+	m += igez["1"] >> hx["init_Ez"];
+	m += igez["2"] >> hy["init_Ez"];
 
 	// Attach kernels to each other
-	Loopback lhxey, lhxez;
-	m += *(zgg.clone()) >> lhxey["initial"] >> ey["Hx"];
-	m += hx["out_Ey"] >> lhxey["loop"];
-	m += *(zgg.clone()) >> lhxez["initial"] >> ez["Hx"];
-	m += hx["out_Ez"] >> lhxez["loop"];
-
-	Loopback lhyez, lhyex;
-	m += *(zgg.clone()) >> lhyez["initial"] >> ez["Hy"];
-	m += hy["out_Ez"] >> lhyez["loop"];
-	m += *(zgg.clone()) >> lhyex["initial"] >> ex["Hy"];
-	m += hy["out_Ex"] >> lhyex["loop"];
-
-	Loopback lhzex, lhzey;
-	m += *(zgg.clone()) >> lhzex["initial"] >> ex["Hz"];
-	m += hz["out_Ex"] >> lhzex["loop"];
-	m += *(zgg.clone()) >> lhzey["initial"] >> ey["Hz"];
-	m += hz["out_Ey"] >> lhzey["loop"];
-
-	Loopback lexhy, lexhz;
-	m += *(zgg.clone()) >> lexhy["initial"] >> hy["Ex"];
-	m += ex["out_Hy"] >> lexhy["loop"];
-	m += *(zgg.clone()) >> lexhz["initial"] >> hz["Ex"];
-	m += ex["out_Hz"] >> lexhz["loop"];
-
-	Loopback leyhz, leyhx;
-	m += *(zgg.clone()) >> leyhz["initial"] >> hz["Ey"];
-	m += ey["out_Hz"] >> leyhz["loop"];
-	m += *(zgg.clone()) >> leyhx["initial"] >> hx["Ey"];
-	m += ey["out_Hx"] >> leyhx["loop"];
-
-	Loopback lezhx, lezhy;
-	m += *(zgg.clone()) >> lezhx["initial"] >> hx["Ez"];
-	m += ez["out_Hx"] >> lezhx["loop"];
-	m += *(zgg.clone()) >> lezhy["initial"] >> hy["Ez"];
-	m += ez["out_Hy"] >> lezhy["loop"];
+	m += hx["out_Ey"] >> ey["Hx"]["out_Hx"] >> hx["Ey"];
+	m += hx["out_Ez"] >> ez["Hx"]["out_Hx"] >> hx["Ez"];
+	m += hy["out_Ez"] >> ez["Hy"]["out_Hy"] >> hy["Ez"];
+	m += hy["out_Ex"] >> ex["Hy"]["out_Hy"] >> hy["Ex"];
+	m += hz["out_Ex"] >> ex["Hz"]["out_Hz"] >> hz["Ex"];
+	m += hz["out_Ey"] >> ey["Hz"]["out_Hz"] >> hz["Ey"];
 
 	// Final output / debugging ports
 	GridPrinter phx, phy, phz, pex, pey, pez;
