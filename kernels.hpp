@@ -19,17 +19,20 @@ public:
 
 // Print the contents of a Grid, for debugging purposes.
 class GridPrinter : public raft::kernel {
+	bool silent;
+
 public:
-	GridPrinter();
+	GridPrinter(bool silent);
 	raft::kstatus run() final;
 };
 
 class Hx : public raft::kernel {
 	phys::params params;
 	unsigned long iterations;
+	bool print;
 	bool initial = true;
 public:
-	Hx(phys::params params, unsigned long i);
+	Hx(phys::params params, unsigned long i, bool print);
 	raft::kstatus run() final;
 };
 

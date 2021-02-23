@@ -19,7 +19,7 @@ raft::kstatus InitialGridGenerator::run()
 	return raft::stop;
 }
 
-GridPrinter::GridPrinter()
+GridPrinter::GridPrinter(bool silent) : silent(silent)
 {
 	input.addPort<Grid>("grid");
 }
@@ -28,16 +28,21 @@ raft::kstatus GridPrinter::run()
 {
 	Grid g;
 	input["grid"].pop(g);
+	if (silent)
+		return raft::proceed;
+
 	std::stringstream ss;
 	ss << "Grid(" << g.x() << ", " << g.y() << ", " << g.z() << ") = [ ";
 	for (dim_t i = 0; i < g.x() * g.y() * g.z(); i++)
 		ss << g[i] << " ";
 	ss << "]" << std::endl;
-	std::cout << ss.rdbuf();
+
+	std::cout << ss.rdbuf() << std::endl;
 	return raft::proceed;
 }
 
-Hx::Hx(phys::params params, unsigned long i) : raft::kernel(), params(params), iterations(i)
+Hx::Hx(phys::params params, unsigned long i, bool print) :
+	raft::kernel(), params(params), iterations(i), print(print)
 {
 	input.addPort<Grid>("init_Hx");
 	input.addPort<Grid>("init_Ey");
@@ -79,6 +84,9 @@ raft::kstatus Hx::run()
 			}
 		}
 	}
+
+	if (print)
+		std::cout << "Hx: " << iterations << " Iterations remaining." << std::endl;
 
 	output["out_Hx"].push(hx);
 	output["out_Ey"].push(hx);

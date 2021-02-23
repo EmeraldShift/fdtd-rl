@@ -14,6 +14,8 @@ static void usage(const char *progname)
 	std::cerr << "  z: Number of grid units in the Z direction (>0)" << std::endl;
 	std::cerr << "  t: Number of time steps (iterations) to simulate (>=0), 0 = infinite" << std::endl;
 	std::cerr << "supported flags:" << std::endl;
+	std::cerr << "  p: Print remaining iterations" << std::endl;
+	std::cerr << "  s: Suppress final grid output" << std::endl;
 	std::cerr << "  d: Use dynamic queue resizing" << std::endl;
 #ifdef QT
 	std::cerr << "  q: Use QThread pool scheduling" << std::endl;
@@ -53,6 +55,10 @@ int main(int argc, char **argv)
 		flags |= FLAG_DYN;
 	if (find_arg(argv, "v"))
 		flags |= FLAG_VTL;
+	if (find_arg(argv, "s"))
+		flags |= FLAG_SIL;
+	if (find_arg(argv, "p"))
+		flags |= FLAG_PRT;
 
 	return fdtd(dimX, dimY, dimZ, t, flags);
 }
