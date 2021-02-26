@@ -11,8 +11,7 @@ int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, unsigned long t, unsigned long flag
 	// Simulation parameters
 	phys::params params(dimX, dimY, dimZ);
 
-	bool print = flags & FLAG_PRT;
-	Hx hx(params, t, print);
+	Hx hx(params, t, false);
 	Hy hy(params, t);
 	Hz hz(params, t);
 	Ex ex(params, t);
@@ -49,7 +48,7 @@ int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, unsigned long t, unsigned long flag
 	m += hz["out_Ey"] >> ey["Hz"]["out_Hz"] >> hz["Ey"];
 
 	// Final output / debugging ports
-	bool silent = flags & FLAG_SIL;
+	bool silent = !(flags & FLAG_PRT);
 	GridPrinter phx(silent), phy(silent), phz(silent),
 		    pex(silent), pey(silent), pez(silent);
 	m += hx["Final"] >> phx;
