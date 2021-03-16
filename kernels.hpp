@@ -5,15 +5,15 @@
 
 #include <raft>
 
-// Generate randomly-filled Grids with a given dimension (x, y, z).
-class InitialGridGenerator : public raft::kernel {
-	dim_t x, y, z;
-
+// RaftLib flops over when the entire map is cyclic.
+// Having a "dummy" kernel with outbound edges only
+// allows us to trick RL into working properly here.
+class DummyKernel : public raft::kernel {
 public:
 	CLONE();
-	InitialGridGenerator(dim_t x, dim_t y, dim_t z);
-	InitialGridGenerator(const InitialGridGenerator &o) : InitialGridGenerator(o.x, o.y, o.z) {}
-	raft::kstatus run() final;
+	DummyKernel() : raft::kernel() {}
+	DummyKernel(const DummyKernel&) {}
+	raft::kstatus run() final { return raft::stop; }
 };
 
 // Print the contents of a Grid, for debugging purposes.
@@ -30,7 +30,6 @@ class Worker : public raft::kernel {
 protected:
 	phys::params params;
 	unsigned long iterations;
-	bool initial = true;
 	Grid grid;
 
 public:

@@ -20,15 +20,14 @@ int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, unsigned long t, unsigned long flag
 
 	raft::map m;
 
-	InitialGridGenerator dummy(dimX, dimY, dimZ);
-
-	// Self-loopback & Initial Grids
-	m += *(dummy.clone()) >> hx["init_me"];
-	m += *(dummy.clone()) >> hy["init_me"];
-	m += *(dummy.clone()) >> hz["init_me"];
-	m += *(dummy.clone()) >> ex["init_me"];
-	m += *(dummy.clone()) >> ey["init_me"];
-	m += *(dummy.clone()) >> ez["init_me"];
+	// Satisfy RL's desire for non-cyclic dependencies
+	DummyKernel dummy;
+	m += *(dummy.clone()) >> hx["dummy"];
+	m += *(dummy.clone()) >> hy["dummy"];
+	m += *(dummy.clone()) >> hz["dummy"];
+	m += *(dummy.clone()) >> ex["dummy"];
+	m += *(dummy.clone()) >> ey["dummy"];
+	m += *(dummy.clone()) >> ez["dummy"];
 
 	// Attach kernels to each other
 	m += hx["out_A"] >> ey["B"]["out_B"] >> hx["A"];

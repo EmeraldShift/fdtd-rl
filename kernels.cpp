@@ -3,20 +3,6 @@
 #include <cstdlib>
 #include <iostream>
 
-InitialGridGenerator::InitialGridGenerator(dim_t x, dim_t y, dim_t z) : x(x), y(y), z(z)
-{
-	output.addPort<Grid>("out");
-}
-
-raft::kstatus InitialGridGenerator::run()
-{
-	Grid g(x, y, z);
-	for (dim_t i = 0; i < x * y * z; i++)
-		g[i] = drand48();
-	output["out"].push(g);
-	return raft::stop;
-}
-
 GridPrinter::GridPrinter(bool silent) : silent(silent)
 {
 	input.addPort<Grid>("grid");
@@ -41,7 +27,7 @@ raft::kstatus GridPrinter::run()
 
 Worker::Worker(phys::params params, unsigned long i) :
 	params(params), iterations(i), grid(params.nx, params.ny, params.nz) {
-	input.addPort<Grid>("init_me");
+	input.addPort<Grid>("dummy");
 	input.addPort<Grid>("A");
 	input.addPort<Grid>("B");
 	output.addPort<Grid>("out_A");
@@ -212,4 +198,3 @@ raft::kstatus Ez::run()
 	}
 	return raft::proceed;
 }
-
