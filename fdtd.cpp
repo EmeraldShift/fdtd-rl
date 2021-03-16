@@ -11,7 +11,7 @@ int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, unsigned long t, unsigned long flag
 	// Simulation parameters
 	phys::params params(dimX, dimY, dimZ);
 
-	Hx hx(params, t, false);
+	Hx hx(params, t);
 	Hy hy(params, t);
 	Hz hz(params, t);
 	Ex ex(params, t);

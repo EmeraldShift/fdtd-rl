@@ -37,10 +37,9 @@ public:
 };
 
 class Hx : public Worker {
-	bool print;
 public:
-	Hx(phys::params params, unsigned long i, bool print) :
-		Worker(params, i), print(print) {}
+	Hx(phys::params params, unsigned long i) :
+		Worker(params, i) {}
 	raft::kstatus run() final;
 };
 

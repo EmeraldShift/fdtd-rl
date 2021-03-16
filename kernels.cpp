@@ -61,9 +61,6 @@ raft::kstatus Hx::run()
 		}
 	}
 
-	if (print)
-		std::cout << "Hx: " << iterations << " Iterations remaining." << std::endl;
-
 	output["out_A"].push(grid);
 	output["out_B"].push(grid);
 	return raft::proceed;
