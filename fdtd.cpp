@@ -39,8 +39,8 @@ int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, unsigned long t, unsigned long flag
 
 	// Final output / debugging ports
 	bool silent = !(flags & FLAG_PRT);
-	GridPrinter phx(silent), phy(silent), phz(silent),
-		    pex(silent), pey(silent), pez(silent);
+	GridPrinter phx(params, silent), phy(params, silent), phz(params, silent),
+			pex(params, silent), pey(params, silent), pez(params, silent);
 	m += hx["Final"] >> phx;
 	m += hz["Final"] >> phy;
 	m += ex["Final"] >> phz;

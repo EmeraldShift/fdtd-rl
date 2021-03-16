@@ -3,15 +3,16 @@
 #include <cstdlib>
 #include <iostream>
 
-GridPrinter::GridPrinter(bool silent) : silent(silent)
+GridPrinter::GridPrinter(phys::params params, bool silent) : params(params), silent(silent)
 {
-	input.addPort<Grid>("grid");
+	input.addPort<elem_t>("grid");
 }
 
 raft::kstatus GridPrinter::run()
 {
-	Grid g;
-	input["grid"].pop(g);
+	Grid g = Grid(params.nx, params.ny, params.nz);
+	for (dim_t i = 0, lim = g.x() * g.y() * g.z(); i < lim; i++)
+		input["grid"].pop(g[i]);
 	if (silent)
 		return raft::proceed;
 
@@ -27,16 +28,34 @@ raft::kstatus GridPrinter::run()
 
 Worker::Worker(phys::params params, unsigned long i) :
 	params(params), iterations(i), grid(params.nx, params.ny, params.nz) {
-	input.addPort<Grid>("dummy");
-	input.addPort<Grid>("A");
-	input.addPort<Grid>("B");
-	output.addPort<Grid>("out_A");
-	output.addPort<Grid>("out_B");
-	output.addPort<Grid>("Final");
+	input.addPort<int>("dummy");
+	input.addPort<elem_t>("A");
+	input.addPort<elem_t>("B");
+	output.addPort<elem_t>("out_A");
+	output.addPort<elem_t>("out_B");
+	output.addPort<elem_t>("Final");
 
 	// Random initial grid
 	for (dim_t j = 0, lim = params.nx * params.ny * params.nz; j < lim; j++) {
 		grid[j] = drand48();
+	}
+}
+
+void Worker::popGrids(Grid &a, Grid &b)
+{
+	a = Grid(params.nx, params.ny, params.nz);
+	b = Grid(params.nx, params.ny, params.nz);
+	for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++) {
+		input["A"].pop(a[i]);
+		input["B"].pop(b[i]);
+	}
+}
+
+void Worker::pushGrid()
+{
+	for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++) {
+		output["out_A"].push(grid[i]);
+		output["out_B"].push(grid[i]);
 	}
 }
 
@@ -48,8 +67,7 @@ raft::kstatus Hx::run()
 	}
 
 	Grid ey, ez;
-	input["A"].pop(ey);
-	input["B"].pop(ez);
+	popGrids(ey, ez);
 
 	for (dim_t x = 0; x < params.nx-1; x++) {
 		for (dim_t y = 0; y < params.ny-1; y++) {
@@ -61,8 +79,7 @@ raft::kstatus Hx::run()
 		}
 	}
 
-	output["out_A"].push(grid);
-	output["out_B"].push(grid);
+	pushGrid();
 	return raft::proceed;
 }
 
@@ -74,8 +91,7 @@ raft::kstatus Hy::run()
 	}
 
 	Grid ez, ex;
-	input["A"].pop(ez);
-	input["B"].pop(ex);
+	popGrids(ez, ex);
 
 	for (dim_t x = 0; x < params.nx-1; x++) {
 		for (dim_t y = 0; y < params.ny-1; y++) {
@@ -87,8 +103,7 @@ raft::kstatus Hy::run()
 		}
 	}
 
-	output["out_A"].push(grid);
-	output["out_B"].push(grid);
+	pushGrid();
 	return raft::proceed;
 }
 
@@ -100,8 +115,7 @@ raft::kstatus Hz::run()
 	}
 
 	Grid ex, ey;
-	input["A"].pop(ex);
-	input["B"].pop(ey);
+	popGrids(ex, ey);
 
 	for (dim_t x = 0; x < params.nx-1; x++) {
 		for (dim_t y = 0; y < params.ny-1; y++) {
@@ -113,8 +127,7 @@ raft::kstatus Hz::run()
 		}
 	}
 
-	output["out_A"].push(grid);
-	output["out_B"].push(grid);
+	pushGrid();
 	return raft::proceed;
 }
 
@@ -125,12 +138,10 @@ raft::kstatus Ex::run()
 		return raft::stop;
 	}
 
-	output["out_A"].push(grid);
-	output["out_B"].push(grid);
+	pushGrid();
 
 	Grid hy, hz;
-	input["A"].pop(hy);
-	input["B"].pop(hz);
+	popGrids(hy, hz);
 
 	for (dim_t x = 1; x < params.nx; x++) {
 		for (dim_t y = 1; y < params.ny; y++) {
@@ -151,12 +162,10 @@ raft::kstatus Ey::run()
 		return raft::stop;
 	}
 
-	output["out_A"].push(grid);
-	output["out_B"].push(grid);
+	pushGrid();
 
 	Grid hz, hx;
-	input["A"].pop(hz);
-	input["B"].pop(hx);
+	popGrids(hz, hx);
 
 	for (dim_t x = 1; x < params.nx; x++) {
 		for (dim_t y = 1; y < params.ny; y++) {
@@ -177,12 +186,10 @@ raft::kstatus Ez::run()
 		return raft::stop;
 	}
 
-	output["out_A"].push(grid);
-	output["out_B"].push(grid);
+	pushGrid();
 
 	Grid hx, hy;
-	input["A"].pop(hx);
-	input["B"].pop(hy);
+	popGrids(hx, hy);
 
 	for (dim_t x = 1; x < params.nx; x++) {
 		for (dim_t y = 1; y < params.ny; y++) {

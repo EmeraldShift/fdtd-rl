@@ -11,17 +11,20 @@
 class DummyKernel : public raft::kernel {
 public:
 	CLONE();
-	DummyKernel() : raft::kernel() {}
-	DummyKernel(const DummyKernel&) {}
+	DummyKernel() : raft::kernel() {
+		output.addPort<int>("dummy");
+	}
+	DummyKernel(const DummyKernel&) : DummyKernel() {}
 	raft::kstatus run() final { return raft::stop; }
 };
 
 // Print the contents of a Grid, for debugging purposes.
 class GridPrinter : public raft::kernel {
+	phys::params params;
 	bool silent;
 
 public:
-	explicit GridPrinter(bool silent);
+	explicit GridPrinter(phys::params params, bool silent);
 	raft::kstatus run() final;
 };
 
@@ -34,6 +37,8 @@ protected:
 
 public:
 	Worker(phys::params params, unsigned long i);
+	void popGrids(Grid &a, Grid &b);
+	void pushGrid();
 };
 
 class Hx : public Worker {
