@@ -20,32 +20,23 @@ int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, unsigned long t, unsigned long flag
 
 	raft::map m;
 
-	InitialGridGenerator igh(dimX, dimY, dimZ, 1);
-	InitialGridGenerator igex(dimX, dimY, dimZ, 3);
-	InitialGridGenerator igey(dimX, dimY, dimZ, 3);
-	InitialGridGenerator igez(dimX, dimY, dimZ, 3);
+	InitialGridGenerator dummy(dimX, dimY, dimZ);
 
 	// Self-loopback & Initial Grids
-	m += *(igh.clone()) >> hx["init_Hx"]["out_Hx"] >> hx["Hx"];
-	m += *(igh.clone()) >> hy["init_Hy"]["out_Hy"] >> hy["Hy"];
-	m += *(igh.clone()) >> hz["init_Hz"]["out_Hz"] >> hz["Hz"];
-	m += igex["0"] >> ex["init_Ex"]["out_Ex"] >> ex["Ex"];
-	m += igex["1"] >> hy["init_Ex"];
-	m += igex["2"] >> hz["init_Ex"];
-	m += igey["0"] >> ey["init_Ey"]["out_Ey"] >> ey["Ey"];
-	m += igey["1"] >> hz["init_Ey"];
-	m += igey["2"] >> hx["init_Ey"];
-	m += igez["0"] >> ez["init_Ez"]["out_Ez"] >> ez["Ez"];
-	m += igez["1"] >> hx["init_Ez"];
-	m += igez["2"] >> hy["init_Ez"];
+	m += *(dummy.clone()) >> hx["init_me"];
+	m += *(dummy.clone()) >> hy["init_me"];
+	m += *(dummy.clone()) >> hz["init_me"];
+	m += *(dummy.clone()) >> ex["init_me"];
+	m += *(dummy.clone()) >> ey["init_me"];
+	m += *(dummy.clone()) >> ez["init_me"];
 
 	// Attach kernels to each other
-	m += hx["out_Ey"] >> ey["Hx"]["out_Hx"] >> hx["Ey"];
-	m += hx["out_Ez"] >> ez["Hx"]["out_Hx"] >> hx["Ez"];
-	m += hy["out_Ez"] >> ez["Hy"]["out_Hy"] >> hy["Ez"];
-	m += hy["out_Ex"] >> ex["Hy"]["out_Hy"] >> hy["Ex"];
-	m += hz["out_Ex"] >> ex["Hz"]["out_Hz"] >> hz["Ex"];
-	m += hz["out_Ey"] >> ey["Hz"]["out_Hz"] >> hz["Ey"];
+	m += hx["out_A"] >> ey["B"]["out_B"] >> hx["A"];
+	m += hx["out_B"] >> ez["A"]["out_A"] >> hx["B"];
+	m += hy["out_A"] >> ez["B"]["out_B"] >> hy["A"];
+	m += hy["out_B"] >> ex["A"]["out_A"] >> hy["B"];
+	m += hz["out_A"] >> ex["B"]["out_B"] >> hz["A"];
+	m += hz["out_B"] >> ey["A"]["out_A"] >> hz["B"];
 
 	// Final output / debugging ports
 	bool silent = !(flags & FLAG_PRT);

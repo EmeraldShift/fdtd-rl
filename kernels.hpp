@@ -8,12 +8,11 @@
 // Generate randomly-filled Grids with a given dimension (x, y, z).
 class InitialGridGenerator : public raft::kernel {
 	dim_t x, y, z;
-	unsigned int ports;
 
 public:
 	CLONE();
-	InitialGridGenerator(dim_t x, dim_t y, dim_t z, unsigned int ports);
-	InitialGridGenerator(const InitialGridGenerator &o) : InitialGridGenerator(o.x, o.y, o.z, o.ports) {}
+	InitialGridGenerator(dim_t x, dim_t y, dim_t z);
+	InitialGridGenerator(const InitialGridGenerator &o) : InitialGridGenerator(o.x, o.y, o.z) {}
 	raft::kstatus run() final;
 };
 
@@ -26,57 +25,57 @@ public:
 	raft::kstatus run() final;
 };
 
-class Hx : public raft::kernel {
+
+class Worker : public raft::kernel {
+protected:
 	phys::params params;
 	unsigned long iterations;
+	bool initial = true;
+	Grid grid;
+
+public:
+	Worker(phys::params params, unsigned long i);
+};
+
+class Hx : public Worker {
 	bool print;
-	bool initial = true;
 public:
-	Hx(phys::params params, unsigned long i, bool print);
+	Hx(phys::params params, unsigned long i, bool print) :
+		Worker(params, i), print(print) {}
 	raft::kstatus run() final;
 };
 
-class Hy : public raft::kernel {
-	phys::params params;
-	unsigned long iterations;
-	bool initial = true;
+class Hy : public Worker {
 public:
-	Hy(phys::params params, unsigned long i);
+	Hy(phys::params params, unsigned long i) :
+		Worker(params, i) {}
 	raft::kstatus run() final;
 };
 
-class Hz : public raft::kernel {
-	phys::params params;
-	unsigned long iterations;
-	bool initial = true;
+class Hz : public Worker {
 public:
-	Hz(phys::params params, unsigned long i);
+	Hz(phys::params params, unsigned long i) :
+		Worker(params, i) {}
 	raft::kstatus run() final;
 };
 
-class Ex : public raft::kernel {
-	phys::params params;
-	unsigned long iterations;
-	bool initial = true;
+class Ex : public Worker {
 public:
-	Ex(phys::params params, unsigned long i);
+	Ex(phys::params params, unsigned long i) :
+		Worker(params, i) {}
 	raft::kstatus run() final;
 };
 
-class Ey : public raft::kernel {
-	phys::params params;
-	unsigned long iterations;
-	bool initial = true;
+class Ey : public Worker {
 public:
-	Ey(phys::params params, unsigned long i);
+	Ey(phys::params params, unsigned long i) :
+		Worker(params, i) {}
 	raft::kstatus run() final;
 };
 
-class Ez : public raft::kernel {
-	phys::params params;
-	unsigned long iterations;
-	bool initial = true;
+class Ez : public Worker {
 public:
-	Ez(phys::params params, unsigned long i);
+	Ez(phys::params params, unsigned long i) :
+		Worker(params, i) {}
 	raft::kstatus run() final;
 };
