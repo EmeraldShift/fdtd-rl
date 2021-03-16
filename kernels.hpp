@@ -21,7 +21,7 @@ class GridPrinter : public raft::kernel {
 	bool silent;
 
 public:
-	GridPrinter(bool silent);
+	explicit GridPrinter(bool silent);
 	raft::kstatus run() final;
 };
 

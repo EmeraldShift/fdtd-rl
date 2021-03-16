@@ -35,8 +35,8 @@ Worker::Worker(phys::params params, unsigned long i) :
 	output.addPort<Grid>("Final");
 
 	// Random initial grid
-	for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++) {
-		grid[i] = drand48();
+	for (dim_t j = 0, lim = params.nx * params.ny * params.nz; j < lim; j++) {
+		grid[j] = drand48();
 	}
 }
 
