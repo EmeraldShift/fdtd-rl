@@ -41,12 +41,12 @@ int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, unsigned long t, unsigned long flag
 	bool silent = !(flags & FLAG_PRT);
 	GridPrinter phx(params, silent), phy(params, silent), phz(params, silent),
 			pex(params, silent), pey(params, silent), pez(params, silent);
-	m += hx["Final"] >> phx;
-	m += hz["Final"] >> phy;
-	m += ex["Final"] >> phz;
-	m += hy["Final"] >> pex;
-	m += ey["Final"] >> pey;
-	m += ez["Final"] >> pez;
+	m += hx["final"] >> phx;
+	m += hz["final"] >> phy;
+	m += ex["final"] >> phz;
+	m += hy["final"] >> pex;
+	m += ey["final"] >> pey;
+	m += ez["final"] >> pez;
 
 #ifdef VL
 	if (flags & FLAG_VTL) {

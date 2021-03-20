@@ -4,6 +4,7 @@
 #include "phys.hpp"
 
 #include <raft>
+#include <iostream>
 
 // RaftLib flops over when the entire map is cyclic.
 // Having a "dummy" kernel with outbound edges only
@@ -15,7 +16,10 @@ public:
 		output.addPort<int>("dummy");
 	}
 	DummyKernel(const DummyKernel&) : DummyKernel() {}
-	raft::kstatus run() final { return raft::stop; }
+	raft::kstatus run() final {
+		output["dummy"].push(5);
+		return raft::stop;
+	}
 };
 
 // Print the contents of a Grid, for debugging purposes.
