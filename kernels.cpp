@@ -3,6 +3,9 @@
 #include <cstdlib>
 #include <iostream>
 
+template class Worker<WorkerType::H>;
+template class Worker<WorkerType::E>;
+
 GridPrinter::GridPrinter(phys::params params, bool silent) : params(params), silent(silent)
 {
 	input.addPort<elem_t>("grid");
@@ -26,7 +29,8 @@ raft::kstatus GridPrinter::run()
 	return raft::proceed;
 }
 
-Worker::Worker(phys::params params, unsigned long i) :
+template <WorkerType T>
+Worker<T>::Worker(phys::params params, unsigned long i) :
 	params(params), iterations(i), grid(params.nx, params.ny, params.nz) {
 	input.addPort<int>("dummy");
 	input.addPort<elem_t>("A");
@@ -41,7 +45,8 @@ Worker::Worker(phys::params params, unsigned long i) :
 	}
 }
 
-void Worker::popGrids(Grid &a, Grid &b)
+template <WorkerType T>
+void Worker<T>::popGrids(Grid &a, Grid &b)
 {
 	a = Grid(params.nx, params.ny, params.nz);
 	b = Grid(params.nx, params.ny, params.nz);
@@ -51,7 +56,8 @@ void Worker::popGrids(Grid &a, Grid &b)
 	}
 }
 
-void Worker::pushGrid()
+template <WorkerType T>
+void Worker<T>::pushGrid()
 {
 	for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++) {
 		output["out_A"].push(grid[i]);
@@ -59,7 +65,9 @@ void Worker::pushGrid()
 	}
 }
 
-raft::kstatus Hx::run()
+// H-field workers first pop grids, then compute, then push.
+template <>
+raft::kstatus Worker<WorkerType::H>::run()
 {
 	if (iterations-- == 0) {
 		for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++)
@@ -67,13 +75,12 @@ raft::kstatus Hx::run()
 		return raft::stop;
 	}
 
-	Grid ey, ez;
-	popGrids(ey, ez);
-
+	Grid a, b;
+	popGrids(a, b);
 	for (dim_t x = 0; x < params.nx-1; x++) {
 		for (dim_t y = 0; y < params.ny-1; y++) {
 			for (dim_t z = 0; z < params.nz-1; z++) {
-				grid.at(x, y, z) += params.ch * ((ey.at(x,y,z+1)-ey.at(x,y,z))*params.cz - (ez.at(x,y+1,z)-ez.at(x,y,z))*params.cy);
+				grid.at(x, y, z) += diff(a, b, x, y, z);
 			}
 		}
 	}
@@ -82,53 +89,10 @@ raft::kstatus Hx::run()
 	return raft::proceed;
 }
 
-raft::kstatus Hy::run()
-{
-	if (iterations-- == 0) {
-		for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++)
-			output["final"].push(grid[i]);
-		return raft::stop;
-	}
 
-	Grid ez, ex;
-	popGrids(ez, ex);
-
-	for (dim_t x = 0; x < params.nx-1; x++) {
-		for (dim_t y = 0; y < params.ny-1; y++) {
-			for (dim_t z = 0; z < params.nz-1; z++) {
-				grid.at(x, y, z) += params.ch * ((ez.at(x+1,y,z)-ez.at(x,y,z))*params.cx - (ex.at(x,y,z+1)-ex.at(x,y,z))*params.cz);
-			}
-		}
-	}
-
-	pushGrid();
-	return raft::proceed;
-}
-
-raft::kstatus Hz::run()
-{
-	if (iterations-- == 0) {
-		for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++)
-			output["final"].push(grid[i]);
-		return raft::stop;
-	}
-
-	Grid ex, ey;
-	popGrids(ex, ey);
-
-	for (dim_t x = 0; x < params.nx-1; x++) {
-		for (dim_t y = 0; y < params.ny-1; y++) {
-			for (dim_t z = 0; z < params.nz-1; z++) {
-				grid.at(x, y, z) += params.ch * ((ex.at(x,y+1,z)-ex.at(x,y,z))*params.cy - (ey.at(x+1,y,z)-ey.at(x,y,z))*params.cx);
-			}
-		}
-	}
-
-	pushGrid();
-	return raft::proceed;
-}
-
-raft::kstatus Ex::run()
+// E-field workers first push, then pop grids, then compute.
+template <>
+raft::kstatus Worker<WorkerType::E>::run()
 {
 	if (iterations-- == 0) {
 		for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++)
@@ -138,61 +102,44 @@ raft::kstatus Ex::run()
 
 	pushGrid();
 
-	Grid hy, hz;
-	popGrids(hy, hz);
-
+	Grid a, b;
+	popGrids(a, b);
 	for (dim_t x = 1; x < params.nx; x++) {
 		for (dim_t y = 1; y < params.ny; y++) {
 			for (dim_t z = 1; z < params.nz; z++) {
-				grid.at(x, y, z) -= params.ce * ((hy.at(x,y,z)-hy.at(x,y,z-1))*params.cz - (hz.at(x,y,z)-hz.at(x,y-1,z))*params.cy);
+				grid.at(x, y, z) -= diff(a, b, x, y, z);
 			}
 		}
 	}
 	return raft::proceed;
 }
 
-raft::kstatus Ey::run()
+elem_t Hx::diff(const Grid &ey, const Grid &ez, dim_t x, dim_t y, dim_t z)
 {
-	if (iterations-- == 0) {
-		for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++)
-			output["final"].push(grid[i]);
-		return raft::stop;
-	}
-
-	pushGrid();
-
-	Grid hz, hx;
-	popGrids(hz, hx);
-
-	for (dim_t x = 1; x < params.nx; x++) {
-		for (dim_t y = 1; y < params.ny; y++) {
-			for (dim_t z = 1; z < params.nz; z++) {
-				grid.at(x, y, z) -= params.ce * ((hz.at(x,y,z)-hz.at(x-1,y,z))*params.cx - (hx.at(x,y,z)-hx.at(x,y,z-1))*params.cz);
-			}
-		}
-	}
-	return raft::proceed;
+	return params.ch * ((ey.at(x,y,z+1)-ey.at(x,y,z))*params.cz - (ez.at(x,y+1,z)-ez.at(x,y,z))*params.cy);
 }
 
-raft::kstatus Ez::run()
+elem_t Hy::diff(const Grid &ez, const Grid &ex, dim_t x, dim_t y, dim_t z)
 {
-	if (iterations-- == 0) {
-		for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++)
-			output["final"].push(grid[i]);
-		return raft::stop;
-	}
+	return params.ch * ((ez.at(x+1,y,z)-ez.at(x,y,z))*params.cx - (ex.at(x,y,z+1)-ex.at(x,y,z))*params.cz);
+}
 
-	pushGrid();
+elem_t Hz::diff(const Grid &ex, const Grid &ey, dim_t x, dim_t y, dim_t z)
+{
+	return params.ch * ((ex.at(x,y+1,z)-ex.at(x,y,z))*params.cy - (ey.at(x+1,y,z)-ey.at(x,y,z))*params.cx);
+}
 
-	Grid hx, hy;
-	popGrids(hx, hy);
+elem_t Ex::diff(const Grid &hy, const Grid &hz, dim_t x, dim_t y, dim_t z)
+{
+	return params.ce * ((hy.at(x,y,z)-hy.at(x,y,z-1))*params.cz - (hz.at(x,y,z)-hz.at(x,y-1,z))*params.cy);
+}
 
-	for (dim_t x = 1; x < params.nx; x++) {
-		for (dim_t y = 1; y < params.ny; y++) {
-			for (dim_t z = 1; z < params.nz; z++) {
-				grid.at(x, y, z) -= params.ce * ((hx.at(x,y,z)-hx.at(x,y-1,z))*params.cy - (hy.at(x,y,z)-hy.at(x-1,y,z))*params.cx);
-			}
-		}
-	}
-	return raft::proceed;
+elem_t Ey::diff(const Grid &hz, const Grid &hx, dim_t x, dim_t y, dim_t z)
+{
+	return params.ce * ((hz.at(x,y,z)-hz.at(x-1,y,z))*params.cx - (hx.at(x,y,z)-hx.at(x,y,z-1))*params.cz);
+}
+
+elem_t Ez::diff(const Grid &hx, const Grid &hy, dim_t x, dim_t y, dim_t z)
+{
+	return params.ce * ((hx.at(x,y,z)-hx.at(x,y-1,z))*params.cy - (hy.at(x,y,z)-hy.at(x-1,y,z))*params.cx);
 }

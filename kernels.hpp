@@ -33,6 +33,9 @@ public:
 };
 
 
+enum class WorkerType { H, E };
+
+template <WorkerType T>
 class Worker : public raft::kernel {
 protected:
 	phys::params params;
@@ -43,46 +46,49 @@ public:
 	Worker(phys::params params, unsigned long i);
 	void popGrids(Grid &a, Grid &b);
 	void pushGrid();
+
+	raft::kstatus run() final;
+	virtual elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z) = 0;
 };
 
-class Hx : public Worker {
+class Hx : public Worker<WorkerType::H> {
 public:
 	Hx(phys::params params, unsigned long i) :
 		Worker(params, i) {}
-	raft::kstatus run() final;
+	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
 };
 
-class Hy : public Worker {
+class Hy : public Worker<WorkerType::H> {
 public:
 	Hy(phys::params params, unsigned long i) :
 		Worker(params, i) {}
-	raft::kstatus run() final;
+	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
 };
 
-class Hz : public Worker {
+class Hz : public Worker<WorkerType::H> {
 public:
 	Hz(phys::params params, unsigned long i) :
 		Worker(params, i) {}
-	raft::kstatus run() final;
+	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
 };
 
-class Ex : public Worker {
+class Ex : public Worker<WorkerType::E> {
 public:
 	Ex(phys::params params, unsigned long i) :
 		Worker(params, i) {}
-	raft::kstatus run() final;
+	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
 };
 
-class Ey : public Worker {
+class Ey : public Worker<WorkerType::E> {
 public:
 	Ey(phys::params params, unsigned long i) :
 		Worker(params, i) {}
-	raft::kstatus run() final;
+	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
 };
 
-class Ez : public Worker {
+class Ez : public Worker<WorkerType::E> {
 public:
 	Ez(phys::params params, unsigned long i) :
 		Worker(params, i) {}
-	raft::kstatus run() final;
+	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
 };
