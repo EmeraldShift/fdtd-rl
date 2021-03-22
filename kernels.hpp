@@ -40,10 +40,11 @@ class Worker : public raft::kernel {
 protected:
 	phys::params params;
 	unsigned long iterations;
+	bool silent;
 	Grid grid;
 
 public:
-	Worker(phys::params params, unsigned long i);
+	Worker(phys::params params, unsigned long i, bool silent);
 	void popGrids(Grid &a, Grid &b);
 	void pushGrid();
 
@@ -53,42 +54,42 @@ public:
 
 class Hx : public Worker<WorkerType::H> {
 public:
-	Hx(phys::params params, unsigned long i) :
-		Worker(params, i) {}
+	Hx(phys::params params, unsigned long i, bool silent) :
+		Worker(params, i, silent) {}
 	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
 };
 
 class Hy : public Worker<WorkerType::H> {
 public:
-	Hy(phys::params params, unsigned long i) :
-		Worker(params, i) {}
+	Hy(phys::params params, unsigned long i, bool silent) :
+		Worker(params, i, silent) {}
 	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
 };
 
 class Hz : public Worker<WorkerType::H> {
 public:
-	Hz(phys::params params, unsigned long i) :
-		Worker(params, i) {}
+	Hz(phys::params params, unsigned long i, bool silent) :
+		Worker(params, i, silent) {}
 	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
 };
 
 class Ex : public Worker<WorkerType::E> {
 public:
-	Ex(phys::params params, unsigned long i) :
-		Worker(params, i) {}
+	Ex(phys::params params, unsigned long i, bool silent) :
+		Worker(params, i, silent) {}
 	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
 };
 
 class Ey : public Worker<WorkerType::E> {
 public:
-	Ey(phys::params params, unsigned long i) :
-		Worker(params, i) {}
+	Ey(phys::params params, unsigned long i, bool silent) :
+		Worker(params, i, silent) {}
 	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
 };
 
 class Ez : public Worker<WorkerType::E> {
 public:
-	Ez(phys::params params, unsigned long i) :
-		Worker(params, i) {}
+	Ez(phys::params params, unsigned long i, bool silent) :
+		Worker(params, i, silent) {}
 	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
 };

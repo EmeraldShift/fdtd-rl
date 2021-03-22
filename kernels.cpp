@@ -12,12 +12,13 @@ GridPrinter::GridPrinter(phys::params params, bool silent) : params(params), sil
 }
 
 raft::kstatus GridPrinter::run()
-{
+{;
+	if (silent)
+		return raft::stop;
+
 	Grid g = Grid(params.nx, params.ny, params.nz);
 	for (dim_t i = 0, lim = g.x() * g.y() * g.z(); i < lim; i++)
 		input["grid"].pop(g[i]);
-	if (silent)
-		return raft::proceed;
 
 	std::stringstream ss;
 	ss << "Grid(" << g.x() << ", " << g.y() << ", " << g.z() << ") = [ ";
@@ -30,8 +31,8 @@ raft::kstatus GridPrinter::run()
 }
 
 template <WorkerType T>
-Worker<T>::Worker(phys::params params, unsigned long i) :
-	params(params), iterations(i), grid(params.nx, params.ny, params.nz) {
+Worker<T>::Worker(phys::params params, unsigned long i, bool silent) :
+	params(params), iterations(i), silent(silent), grid(params.nx, params.ny, params.nz) {
 	input.addPort<int>("dummy");
 	input.addPort<elem_t>("A");
 	input.addPort<elem_t>("B");
@@ -70,8 +71,10 @@ template <>
 raft::kstatus Worker<WorkerType::H>::run()
 {
 	if (iterations-- == 0) {
-		for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++)
-			output["final"].push(grid[i]);
+		if (!silent) {
+			for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++)
+				output["final"].push(grid[i]);
+		}
 		return raft::stop;
 	}
 
@@ -95,8 +98,10 @@ template <>
 raft::kstatus Worker<WorkerType::E>::run()
 {
 	if (iterations-- == 0) {
-		for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++)
-			output["final"].push(grid[i]);
+		if (!silent) {
+			for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++)
+				output["final"].push(grid[i]);
+		}
 		return raft::stop;
 	}
 

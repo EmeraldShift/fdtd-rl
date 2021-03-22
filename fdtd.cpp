@@ -11,12 +11,14 @@ int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, unsigned long t, unsigned long flag
 	// Simulation parameters
 	phys::params params(dimX, dimY, dimZ);
 
-	Hx hx(params, t);
-	Hy hy(params, t);
-	Hz hz(params, t);
-	Ex ex(params, t);
-	Ey ey(params, t);
-	Ez ez(params, t);
+	bool silent = !(flags & FLAG_PRT);
+
+	Hx hx(params, t, silent);
+	Hy hy(params, t, silent);
+	Hz hz(params, t, silent);
+	Ex ex(params, t, silent);
+	Ey ey(params, t, silent);
+	Ez ez(params, t, silent);
 
 	raft::map m;
 
@@ -38,7 +40,6 @@ int fdtd(dim_t dimX, dim_t dimY, dim_t dimZ, unsigned long t, unsigned long flag
 	m += hz["out_B"] >> ey["A"]["out_A"] >> hz["B"];
 
 	// Final output / debugging ports
-	bool silent = !(flags & FLAG_PRT);
 	GridPrinter phx(params, silent), phy(params, silent), phz(params, silent),
 			pex(params, silent), pey(params, silent), pez(params, silent);
 	m += hx["final"] >> phx;
