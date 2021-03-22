@@ -33,9 +33,11 @@ public:
 };
 
 
-enum class WorkerType { H, E };
+// Indicator types for H-field vs. E-field workers
+struct H{};
+struct E{};
 
-template <WorkerType T>
+template <typename T>
 class Worker : public raft::kernel {
 protected:
 	phys::params params;
@@ -52,44 +54,17 @@ public:
 	virtual elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z) = 0;
 };
 
-class Hx : public Worker<WorkerType::H> {
-public:
-	Hx(phys::params params, unsigned long i, bool silent) :
-		Worker(params, i, silent) {}
-	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
-};
+#define WORKER_CLASS(Type, Dim) \
+	class Type##Dim : public Worker<Type> { \
+	public: \
+		Type##Dim(phys::params params, unsigned long i, bool silent) : \
+			Worker(params, i, silent) {} \
+		elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z) final; \
+	}
 
-class Hy : public Worker<WorkerType::H> {
-public:
-	Hy(phys::params params, unsigned long i, bool silent) :
-		Worker(params, i, silent) {}
-	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
-};
-
-class Hz : public Worker<WorkerType::H> {
-public:
-	Hz(phys::params params, unsigned long i, bool silent) :
-		Worker(params, i, silent) {}
-	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
-};
-
-class Ex : public Worker<WorkerType::E> {
-public:
-	Ex(phys::params params, unsigned long i, bool silent) :
-		Worker(params, i, silent) {}
-	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
-};
-
-class Ey : public Worker<WorkerType::E> {
-public:
-	Ey(phys::params params, unsigned long i, bool silent) :
-		Worker(params, i, silent) {}
-	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
-};
-
-class Ez : public Worker<WorkerType::E> {
-public:
-	Ez(phys::params params, unsigned long i, bool silent) :
-		Worker(params, i, silent) {}
-	elem_t diff(const Grid &, const Grid &, dim_t x, dim_t y, dim_t z ) final;
-};
+WORKER_CLASS(H, x);
+WORKER_CLASS(H, y);
+WORKER_CLASS(H, z);
+WORKER_CLASS(E, x);
+WORKER_CLASS(E, y);
+WORKER_CLASS(E, z);

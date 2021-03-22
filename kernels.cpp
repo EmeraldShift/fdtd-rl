@@ -3,8 +3,8 @@
 #include <cstdlib>
 #include <iostream>
 
-template class Worker<WorkerType::H>;
-template class Worker<WorkerType::E>;
+template class Worker<H>;
+template class Worker<E>;
 
 GridPrinter::GridPrinter(phys::params params, bool silent) : params(params), silent(silent)
 {
@@ -30,7 +30,7 @@ raft::kstatus GridPrinter::run()
 	return raft::proceed;
 }
 
-template <WorkerType T>
+template <typename T>
 Worker<T>::Worker(phys::params params, unsigned long i, bool silent) :
 	params(params), iterations(i), silent(silent), grid(params.nx, params.ny, params.nz) {
 	input.addPort<int>("dummy");
@@ -46,7 +46,7 @@ Worker<T>::Worker(phys::params params, unsigned long i, bool silent) :
 	}
 }
 
-template <WorkerType T>
+template <typename T>
 void Worker<T>::popGrids(Grid &a, Grid &b)
 {
 	a = Grid(params.nx, params.ny, params.nz);
@@ -57,7 +57,7 @@ void Worker<T>::popGrids(Grid &a, Grid &b)
 	}
 }
 
-template <WorkerType T>
+template <typename T>
 void Worker<T>::pushGrid()
 {
 	for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++) {
@@ -67,8 +67,8 @@ void Worker<T>::pushGrid()
 }
 
 // H-field workers first pop grids, then compute, then push.
-template <>
-raft::kstatus Worker<WorkerType::H>::run()
+template <typename T>
+raft::kstatus Worker<T>::run()
 {
 	if (iterations-- == 0) {
 		if (!silent) {
@@ -78,46 +78,39 @@ raft::kstatus Worker<WorkerType::H>::run()
 		return raft::stop;
 	}
 
+	// E-field workers should push before popping
+	if (typeid(T) == typeid(E))
+		pushGrid();
+
 	Grid a, b;
 	popGrids(a, b);
-	for (dim_t x = 0; x < params.nx-1; x++) {
-		for (dim_t y = 0; y < params.ny-1; y++) {
-			for (dim_t z = 0; z < params.nz-1; z++) {
+
+	// Bounds also differ by one between H and E fields
+	dim_t x_min = typeid(T) == typeid(E);
+	dim_t x_max = x_min + params.nx - 1;
+	dim_t y_min = typeid(T) == typeid(E);
+	dim_t y_max = y_min + params.ny - 1;
+	dim_t z_min = typeid(T) == typeid(E);
+	dim_t z_max = z_min + params.nz - 1;
+
+	// Calculate delta at each location and in-place modify our grid
+	for (dim_t x = x_min; x < x_max; x++) {
+		for (dim_t y = y_min; y < y_max; y++) {
+			for (dim_t z = z_min; z < z_max; z++) {
 				grid.at(x, y, z) += diff(a, b, x, y, z);
 			}
 		}
 	}
 
-	pushGrid();
+	// H-field workers should push after the work is done
+	if (typeid(T) == typeid(H))
+		pushGrid();
 	return raft::proceed;
 }
 
-
-// E-field workers first push, then pop grids, then compute.
-template <>
-raft::kstatus Worker<WorkerType::E>::run()
-{
-	if (iterations-- == 0) {
-		if (!silent) {
-			for (dim_t i = 0, lim = params.nx * params.ny * params.nz; i < lim; i++)
-				output["final"].push(grid[i]);
-		}
-		return raft::stop;
-	}
-
-	pushGrid();
-
-	Grid a, b;
-	popGrids(a, b);
-	for (dim_t x = 1; x < params.nx; x++) {
-		for (dim_t y = 1; y < params.ny; y++) {
-			for (dim_t z = 1; z < params.nz; z++) {
-				grid.at(x, y, z) -= diff(a, b, x, y, z);
-			}
-		}
-	}
-	return raft::proceed;
-}
+// Unfortunately, there's not really a cleaner way to write out all the calculations, but here's the gist:
+// A field (Type, Dim) takes as input the two fields of opposite Type and differing Dim.
+// It then computes a cross product over those two fields across space.
 
 elem_t Hx::diff(const Grid &ey, const Grid &ez, dim_t x, dim_t y, dim_t z)
 {
