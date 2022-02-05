@@ -45,6 +45,7 @@ static error_t parse_opt(int key, char *arg, argp_state *state)
 		if (!arg)
 			argp_usage(state);
 
+		// TODO: Understand why the +1 here
 		unsigned long th = std::strtoul(arg, nullptr, 0);
 		const char *thval = std::to_string(th + 1).c_str();
 		setenv("QT_NUM_SHEPHERDS", "1", 1);

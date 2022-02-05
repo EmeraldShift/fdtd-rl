@@ -1,0 +1,2 @@
+- Combine common work between this implementation and the NoRL version
+- Merge the two versions into one repo that compiles two binaries
